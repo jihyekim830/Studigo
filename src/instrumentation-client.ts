@@ -1,5 +1,5 @@
 const enableMocking = async () => {
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  if (typeof window !== 'undefined') {
     const { worker } = await import('@/shared/api/mocks')
     worker.start({ onUnhandledRequest: 'bypass' })
   }
