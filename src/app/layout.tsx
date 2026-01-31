@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import localFont from 'next/font/local'
 import './globals.css'
-import { HeaderWrapper } from '@/features/auth'
 import Footer from '@/shared/ui/Footer'
 import { Toaster } from '@/shared/ui/Toaster'
 import Providers from '@/app/providers'
+import { HeaderWrapper } from '@/widgets/auth-header/ui/HeaderWrapper'
 
 export const metadata: Metadata = {
   title: 'StudiGo',
@@ -27,7 +27,7 @@ const RootLayout = ({
       <body className="font-pretendard flex min-h-screen flex-col">
         <Providers>
           <HeaderWrapper />
-          <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 py-10">
+          <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-10">
             {children}
           </main>
           <Footer />
