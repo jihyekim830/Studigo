@@ -8,8 +8,24 @@ import {
 // ---------- 채팅방 목록 조회 ----------
 const getChatRoomList = http.get(
   `${process.env.NEXT_PUBLIC_API_BASE_URL}/chat`,
-  async () => {
-    return HttpResponse.json({ rooms: CHAT_ROOMS })
+  async ({ request }) => {
+    const url = new URL(request.url)
+    const sort = url.searchParams.get('sort') ?? 'desc'
+
+    if (sort === 'desc')
+      return HttpResponse.json({
+        rooms: CHAT_ROOMS.sort(
+          ({ last_message_at: a }, { last_message_at: b }) =>
+            new Date(b).getTime() - new Date(a).getTime()
+        ),
+      })
+    if (sort === 'asc')
+      return HttpResponse.json({
+        rooms: CHAT_ROOMS.sort(
+          ({ last_message_at: a }, { last_message_at: b }) =>
+            new Date(a).getTime() - new Date(b).getTime()
+        ),
+      })
     // await new Promise(() => setTimeout(() => {}, 30000)).then(() => {
     //   return HttpResponse.json({ rooms: CHAT_ROOMS })
     // })
@@ -23,23 +39,32 @@ const getChatRoomList = http.get(
 // ---------- 채팅방 입장 ----------
 const enterChatRoom = http.post<{ roomId?: string }>(
   `${process.env.NEXT_PUBLIC_API_BASE_URL}/chat/:roomId`,
-  ({ params }) => {
+  async ({ params }) => {
     const { roomId } = params
     const parsedRoomId = Number(roomId)
 
-    if ([1, 2, 3, 4].includes(parsedRoomId ?? '')) {
-      return HttpResponse.json({
+    return await new Promise((resolve) => setTimeout(resolve, 3000)).then(() =>
+      HttpResponse.json({
         message: '채팅방에 입장했습니다.',
         room: {
           id: parsedRoomId,
           name: CHAT_ROOMS.find((room) => room.id === parsedRoomId)?.name,
         },
       })
-    }
-    return HttpResponse.json(
-      { detail: '채팅방을 찾을 수 없습니다.' },
-      { status: 404 }
     )
+    // if ([1, 2, 3, 4].includes(parsedRoomId ?? '')) {
+    //   return HttpResponse.json({
+    //     message: '채팅방에 입장했습니다.',
+    //     room: {
+    //       id: parsedRoomId,
+    //       name: CHAT_ROOMS.find((room) => room.id === parsedRoomId)?.name,
+    //     },
+    //   })
+    // }
+    // return HttpResponse.json(
+    //   { detail: '채팅방을 찾을 수 없습니다.' },
+    //   { status: 404 }
+    // )
   }
 )
 
@@ -111,16 +136,28 @@ const url = `${protocol}://${process.env.NEXT_PUBLIC_WS_HOST}/ws/chat/rooms/:roo
 const chat = ws.link(url)
 
 const chatSocketHandlers = [
-  chat.addEventListener('connection', ({ client }) => {
+  chat.addEventListener('connection', async ({ client }) => {
     console.log('✨ 웹소켓 연결 완료!')
 
-    SOCKET_MESSAGES.forEach(async (message, index) => {
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000 * index + 1)
-      ).then(() =>
-        client.send(JSON.stringify({ type: 'NEW_MESSAGE', payload: message }))
+    // 새로운 메세지
+    for (const [_, message] of SOCKET_MESSAGES.entries()) {
+      await new Promise((resolve) => setTimeout(resolve, 500)).then(() =>
+        client.send(JSON.stringify({ type: 'NEW_MESSAGE', message }))
       )
-    })
+    }
+
+    // 관리자가 메세지 삭제
+    const url = client.url.toString()
+    const roomId = Number(url.split('/')[6])
+    await new Promise((resolve) => setTimeout(resolve, 1000)).then(() =>
+      client.send(
+        JSON.stringify({
+          type: 'MESSAGE_DELETED',
+          room_id: roomId,
+          message_id: 104,
+        })
+      )
+    )
 
     client.addEventListener('close', () => {
       console.log('✨ 웹소켓 연결 종료!')
