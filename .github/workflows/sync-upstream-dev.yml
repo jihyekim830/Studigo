@@ -17,6 +17,7 @@ jobs:
       - name: Checkout fork dev
         uses: actions/checkout@v6
         with:
+          token: ${{ secrets.SYNC_TOKEN }}
           ref: dev
           fetch-depth: 0
 
