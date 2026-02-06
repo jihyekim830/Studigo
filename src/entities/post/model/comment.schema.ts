@@ -4,27 +4,27 @@ import { AuthorSchema } from '@/entities/post/model/author.schema'
 // 베이스
 const CommentBaseSchema = z.object({
   id: z.number().int().positive(),
-  post_id: z.number().int().positive(),
+  post_id: z.number().int().positive().optional(),
   author: AuthorSchema,
   content: z.string(),
-  tagged_nicknames: z.array(z.string()),
+  tagged_nicknames: z.array(z.string()).optional(),
   created_at: z.string(),
 })
 
 // 상세
 export const CommentSchema = CommentBaseSchema.transform((comment) => ({
   id: comment.id,
-  postId: comment.post_id,
   author: comment.author,
   content: comment.content,
-  taggedNicknames: comment.tagged_nicknames,
   createdAt: new Date(comment.created_at),
+  ...(comment.post_id !== undefined && { postId: comment.post_id }),
+  ...(comment.tagged_nicknames !== undefined && {
+    taggedNicknames: comment.tagged_nicknames,
+  }),
 }))
 
 export type Comment = z.infer<typeof CommentSchema>
 
-// TODO: comments 조회 API 수정 요청하기 (405)
-// 일단 API 명세서 참고로 작성 (추후 수정)
 // 목록의 단일
 export const CommentListItemSchema = CommentBaseSchema.omit({
   post_id: true,

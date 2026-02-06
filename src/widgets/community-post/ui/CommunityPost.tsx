@@ -1,16 +1,18 @@
-import { Heart, MessageSquare, Siren } from 'lucide-react'
+import { cn } from '@/shared/lib/cn'
+import Image from 'next/image'
+import getPost from '@/widgets/community-post/api/getPost'
 import { Button } from '@/shared/ui/Button'
 import PostStats from '@/entities/post/ui/PostStats'
-import Image from 'next/image'
 import ActionDropdown from '@/shared/ui/ActionDropdown'
-import { cn } from '@/shared/lib/cn'
-import { Post } from '@/entities/post/model/type'
+import { Heart, MessageSquare, Siren } from 'lucide-react'
 
 interface CommunityPostProps {
-  post: Post
+  id: number
 }
 
-export default async function CommunityPost({ post }: CommunityPostProps) {
+export default async function CommunityPost({ id }: CommunityPostProps) {
+  const post = await getPost(id)
+
   return (
     <>
       {/* 헤더 */}
@@ -46,7 +48,7 @@ export default async function CommunityPost({ post }: CommunityPostProps) {
                 {post.author.nickname}
               </span>
               <span className="text-brand-gray-300 text-sm">
-                {post.createdAt}
+                {post.createdAt.toLocaleString()}
               </span>
             </div>
           </div>
